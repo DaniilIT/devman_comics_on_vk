@@ -11,7 +11,7 @@ API_VK_URL = 'https://api.vk.com'
 API_VERSION = 5.124
 
 
-def fetch_random_comic_image():
+def fetch_random_comic():
     """ Функция запрашивает у API xkcd случайное изображение с комиксом и сохраняет его.
     Возвращает название комикса и комментарий.
     """
@@ -36,7 +36,7 @@ def fetch_random_comic_image():
     return image_name, comic.get('alt')
 
 
-def public_comic(token, group_id, image_name, message):
+def publish_comic(token, group_id, image_name, message):
     """ Функция публикует комикс в группе в vk
     """
     access_params = {
@@ -76,12 +76,12 @@ def main():
     group_id = dotenv_values('.env')['GROUP_ID']
 
     try:
-        image_name, message = fetch_random_comic_image()
+        image_name, message = fetch_random_comic()
     except requests.exceptions.HTTPError:
         stderr.write(f'Не удалось сделать запрос к API xkcd.\n')
     else:
         try:
-            public_comic(token, group_id, image_name, message)
+            publish_comic(token, group_id, image_name, message)
         except requests.exceptions.HTTPError:
             stderr.write(f'Не удалось сделать запрос к API VK.\n')
 
