@@ -9,12 +9,11 @@ from dotenv import dotenv_values
 XKCD_URL = 'https://xkcd.com'
 API_VK_URL = 'https://api.vk.com'
 API_VERSION = 5.124
-IMAGE_NAME = 'image_comic.png'
 
 
 def fetch_random_comic():
     """ Функция запрашивает у API xkcd случайное изображение с комиксом и сохраняет его.
-    Возвращает комментарий.
+    Возвращает название комикса и комментарий.
     """
     response = requests.get(f'{XKCD_URL}/info.0.json')
     response.raise_for_status()
@@ -26,17 +25,18 @@ def fetch_random_comic():
     response.raise_for_status()
     comic = response.json()
     image_url = comic.get('img')
+    image_name = Path(image_url).name
 
     response = requests.get(image_url)
     response.raise_for_status()
 
-    with open(IMAGE_NAME, 'wb') as f:
+    with open(image_name, 'wb') as f:
         f.write(response.content)
 
-    return comic.get('alt')
+    return image_name, comic.get('alt')
 
 
-def publish_comic_on_vk(implicit_flow_token, group_id, message):
+def publish_comic_on_vk(implicit_flow_token, group_id, image_name, message):
     """ Функция публикует комикс в группе в vk
     """
     access_params = {
@@ -48,7 +48,7 @@ def publish_comic_on_vk(implicit_flow_token, group_id, message):
     response.raise_for_status()
     upload_url = response.json().get('response').get('upload_url')
 
-    with open(IMAGE_NAME, 'rb') as file:
+    with open(image_name, 'rb') as file:
         response = requests.post(upload_url, files={'photo': file})
 
     response.raise_for_status()
@@ -77,16 +77,16 @@ def main():
     vk_group_id = dotenv_values('.env')['VK_GROUP_ID']
 
     try:
-        message = fetch_random_comic()
+        image_name, message = fetch_random_comic()
     except requests.exceptions.HTTPError:
         stderr.write(f'Не удалось сделать запрос к API xkcd.\n')
     else:
         try:
-            publish_comic_on_vk(vk_implicit_flow_token, vk_group_id, message)
+            publish_comic_on_vk(vk_implicit_flow_token, vk_group_id, image_name, message)
         except requests.exceptions.HTTPError:
             stderr.write(f'Не удалось сделать запрос к API VK.\n')
     finally:
-        Path.unlink(IMAGE_NAME)
+        Path.unlink(image_name)
 
 
 if __name__ == '__main__':
