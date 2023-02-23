@@ -12,8 +12,8 @@
 Вставьте токен и id группы (из адресной строки), куда будет опубликован комикс, в файл `.env`, выполнив команду:
 
 ```
-echo "ACCESS_TOKEN=<your VK_token>" >> .env
-echo "GROUP_ID=<your group_id>" >> .env
+echo "VK_IMPLICIT_FLOW_TOKEN=<your vk_token>" >> .env
+echo "VK_GROUP_ID=<your vk_group_id>" >> .env
 ```
 
 Для этого проекта требуются следующие пакеты Python:

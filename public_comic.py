@@ -36,12 +36,12 @@ def fetch_random_comic():
     return image_name, comic.get('alt')
 
 
-def publish_comic(token, group_id, image_name, message):
+def publish_comic_on_vk(implicit_flow_token, group_id, image_name, message):
     """ Функция публикует комикс в группе в vk
     """
     access_params = {
         'group_id': group_id,
-        'access_token': token,
+        'access_token': implicit_flow_token,
         'v': API_VERSION,
     }
     response = requests.get(f'{API_VK_URL}/method/photos.getWallUploadServer', params=access_params)
@@ -73,8 +73,8 @@ def publish_comic(token, group_id, image_name, message):
 
 
 def main():
-    token = dotenv_values('.env')['ACCESS_TOKEN']
-    group_id = dotenv_values('.env')['GROUP_ID']
+    vk_implicit_flow_token = dotenv_values('.env')['VK_IMPLICIT_FLOW_TOKEN']
+    vk_group_id = dotenv_values('.env')['VK_GROUP_ID']
 
     try:
         image_name, message = fetch_random_comic()
@@ -82,7 +82,7 @@ def main():
         stderr.write(f'Не удалось сделать запрос к API xkcd.\n')
     else:
         try:
-            publish_comic(token, group_id, image_name, message)
+            publish_comic_on_vk(vk_implicit_flow_token, vk_group_id, image_name, message)
         except requests.exceptions.HTTPError:
             stderr.write(f'Не удалось сделать запрос к API VK.\n')
 
