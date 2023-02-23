@@ -50,9 +50,10 @@ def publish_comic(token, group_id, image_name, message):
 
     with open(image_name, 'rb') as file:
         response = requests.post(upload_url, files={'photo': file})
-        response.raise_for_status()
-        params = access_params.copy()
-        params.update(response.json())
+
+    response.raise_for_status()
+    params = access_params.copy()
+    params.update(response.json())
 
     response = requests.post(f'{API_VK_URL}/method/photos.saveWallPhoto', params=params)
     response.raise_for_status()
