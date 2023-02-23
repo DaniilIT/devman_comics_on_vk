@@ -17,14 +17,14 @@ def fetch_random_comic():
     """
     response = requests.get(f'{XKCD_URL}/info.0.json')
     response.raise_for_status()
-    comic_last_number = int(response.json().get('num'))
+    comic_last_number = int(response.json()['num'])
 
     comic_number = randint(1, comic_last_number)
 
     response = requests.get(f'{XKCD_URL}/{comic_number}/info.0.json')
     response.raise_for_status()
     comic = response.json()
-    image_url = comic.get('img')
+    image_url = comic['img']
     image_name = Path(image_url).name
 
     response = requests.get(image_url)
@@ -33,7 +33,7 @@ def fetch_random_comic():
     with open(image_name, 'wb') as f:
         f.write(response.content)
 
-    return image_name, comic.get('alt')
+    return image_name, comic['alt']
 
 
 def upload_comic_on_server_vk(implicit_flow_token, group_id, image_name):
@@ -47,7 +47,7 @@ def upload_comic_on_server_vk(implicit_flow_token, group_id, image_name):
     }
     response = requests.get(f'{API_VK_URL}/method/photos.getWallUploadServer', params=params)
     response.raise_for_status()
-    upload_url = response.json().get('response').get('upload_url')
+    upload_url = response.json()['response']['upload_url']
 
     with open(image_name, 'rb') as file:
         response = requests.post(upload_url, files={'photo': file})
@@ -70,9 +70,9 @@ def save_comic_in_group_album_vk(implicit_flow_token, group_id, server_image):
 
     response = requests.post(f'{API_VK_URL}/method/photos.saveWallPhoto', params=params)
     response.raise_for_status()
-    response = response.json().get('response')[0]
-    media_id = response.get('id')
-    owner_id = response.get('owner_id')
+    response = response.json()['response'][0]
+    media_id = response['id']
+    owner_id = response['owner_id']
     return media_id, owner_id
 
 
