@@ -36,15 +36,16 @@ def fetch_random_comic():
     return image_name, comic.get('alt')
 
 
-def publish_comic_on_vk(implicit_flow_token, group_id, image_name, message):
-    """ Функция публикует комикс в группе в vk
+def upload_comic_on_server_vk(implicit_flow_token, group_id, image_name):
+    """ Функция загружает изображение на сервер в vk.
+    Возвращает информацию о загруженном файле.
     """
-    access_params = {
+    params = {
         'group_id': group_id,
         'access_token': implicit_flow_token,
         'v': API_VERSION,
     }
-    response = requests.get(f'{API_VK_URL}/method/photos.getWallUploadServer', params=access_params)
+    response = requests.get(f'{API_VK_URL}/method/photos.getWallUploadServer', params=params)
     response.raise_for_status()
     upload_url = response.json().get('response').get('upload_url')
 
@@ -52,22 +53,40 @@ def publish_comic_on_vk(implicit_flow_token, group_id, image_name, message):
         response = requests.post(upload_url, files={'photo': file})
 
     response.raise_for_status()
-    params = access_params.copy()
-    params.update(response.json())
+    server_image = response.json()
+    return server_image
+
+
+def save_comic_in_group_album_vk(implicit_flow_token, group_id, server_image):
+    """ Функция сохраняет изображение в альбоме группы в vk.
+    Возвращает идентификаторы сохраненного файла.
+    """
+    params = {
+        'group_id': group_id,
+        'access_token': implicit_flow_token,
+        'v': API_VERSION,
+    }
+    params.update(server_image)
 
     response = requests.post(f'{API_VK_URL}/method/photos.saveWallPhoto', params=params)
     response.raise_for_status()
     response = response.json().get('response')[0]
     media_id = response.get('id')
     owner_id = response.get('owner_id')
+    return media_id, owner_id
 
-    params = access_params.copy()
-    params.update({
-        'owner_id': f'-{params["group_id"]}',
+
+def publish_comic_on_group_wall_vk(implicit_flow_token, group_id, media_id, owner_id, message):
+    """ Функция публикует комикс на стене группы в vk
+    """
+    params = {
+        'access_token': implicit_flow_token,
+        'v': API_VERSION,
+        'owner_id': f'-{group_id}',
         'attachments': f'photo{owner_id}_{media_id}',
         'message': message,
         'from_group': 1,
-    })
+    }
     response = requests.post(f'{API_VK_URL}/method/wall.post', params=params)
     response.raise_for_status()
 
@@ -82,7 +101,9 @@ def main():
         stderr.write(f'Не удалось сделать запрос к API xkcd.\n')
     else:
         try:
-            publish_comic_on_vk(vk_implicit_flow_token, vk_group_id, image_name, message)
+            server_image = upload_comic_on_server_vk(vk_implicit_flow_token, vk_group_id, image_name)
+            media_id, owner_id = save_comic_in_group_album_vk(vk_implicit_flow_token, vk_group_id, server_image)
+            publish_comic_on_group_wall_vk(vk_implicit_flow_token, vk_group_id, media_id, owner_id, message)
         except requests.exceptions.HTTPError:
             stderr.write(f'Не удалось сделать запрос к API VK.\n')
     finally:
