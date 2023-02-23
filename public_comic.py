@@ -11,6 +11,18 @@ API_VK_URL = 'https://api.vk.com'
 API_VERSION = 5.124
 
 
+class VKError(Exception):
+    pass
+
+
+def check_response_vk(response):
+    """ Функция проверяет ответ от API VK
+    """
+    is_error = response.get('error')
+    if is_error:
+        raise VKError(is_error['error_msg'])
+
+
 def fetch_random_comic():
     """ Функция запрашивает у API xkcd случайное изображение с комиксом и сохраняет его.
     Возвращает название комикса и комментарий.
@@ -47,14 +59,17 @@ def upload_comic_on_server_vk(implicit_flow_token, group_id, image_name):
     }
     response = requests.get(f'{API_VK_URL}/method/photos.getWallUploadServer', params=params)
     response.raise_for_status()
-    upload_url = response.json()['response']['upload_url']
+    response = response.json()
+    check_response_vk(response)
+    upload_url = response['response']['upload_url']
 
     with open(image_name, 'rb') as file:
         response = requests.post(upload_url, files={'photo': file})
 
     response.raise_for_status()
-    server_image = response.json()
-    return server_image
+    response = response.json()
+    check_response_vk(response)
+    return response
 
 
 def save_comic_in_group_album_vk(implicit_flow_token, group_id, server_image):
@@ -70,7 +85,9 @@ def save_comic_in_group_album_vk(implicit_flow_token, group_id, server_image):
 
     response = requests.post(f'{API_VK_URL}/method/photos.saveWallPhoto', params=params)
     response.raise_for_status()
-    response = response.json()['response'][0]
+    response = response.json()
+    check_response_vk(response)
+    response = response['response'][0]
     media_id = response['id']
     owner_id = response['owner_id']
     return media_id, owner_id
@@ -89,6 +106,8 @@ def publish_comic_on_group_wall_vk(implicit_flow_token, group_id, media_id, owne
     }
     response = requests.post(f'{API_VK_URL}/method/wall.post', params=params)
     response.raise_for_status()
+    response = response.json()
+    check_response_vk(response)
 
 
 def main():
@@ -106,6 +125,8 @@ def main():
             publish_comic_on_group_wall_vk(vk_implicit_flow_token, vk_group_id, media_id, owner_id, message)
         except requests.exceptions.HTTPError:
             stderr.write(f'Не удалось сделать запрос к API VK.\n')
+        except VKError as error:
+            stderr.write(f'{error}\n')
     finally:
         Path.unlink(image_name)
 
