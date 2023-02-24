@@ -69,10 +69,10 @@ def upload_comic_on_server_vk(implicit_flow_token, group_id, image_name):
     response.raise_for_status()
     response = response.json()
     check_response_vk(response)
-    return response
+    return response['server'], response['photo'], response['hash']
 
 
-def save_comic_in_group_album_vk(implicit_flow_token, group_id, server_image):
+def save_comic_in_group_album_vk(implicit_flow_token, group_id, uploaded_server, uploaded_photo, uploaded_hash):
     """ Функция сохраняет изображение в альбоме группы в vk.
     Возвращает идентификаторы сохраненного файла.
     """
@@ -80,8 +80,10 @@ def save_comic_in_group_album_vk(implicit_flow_token, group_id, server_image):
         'group_id': group_id,
         'access_token': implicit_flow_token,
         'v': API_VERSION,
+        'server': uploaded_server,
+        'photo': uploaded_photo,
+        'hash': uploaded_hash,
     }
-    params.update(server_image)
 
     response = requests.post(f'{API_VK_URL}/method/photos.saveWallPhoto', params=params)
     response.raise_for_status()
@@ -120,8 +122,8 @@ def main():
         stderr.write(f'Не удалось сделать запрос к API xkcd.\n')
     else:
         try:
-            server_image = upload_comic_on_server_vk(vk_implicit_flow_token, vk_group_id, image_name)
-            media_id, owner_id = save_comic_in_group_album_vk(vk_implicit_flow_token, vk_group_id, server_image)
+            uploaded_server, uploaded_photo, uploaded_hash = upload_comic_on_server_vk(vk_implicit_flow_token, vk_group_id, image_name)
+            media_id, owner_id = save_comic_in_group_album_vk(vk_implicit_flow_token, vk_group_id, uploaded_server, uploaded_photo, uploaded_hash)
             publish_comic_on_group_wall_vk(vk_implicit_flow_token, vk_group_id, media_id, owner_id, message)
         except requests.exceptions.HTTPError:
             stderr.write(f'Не удалось сделать запрос к API VK.\n')
