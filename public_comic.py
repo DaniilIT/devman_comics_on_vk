@@ -129,6 +129,7 @@ def main():
     vk_implicit_flow_token = config['VK_IMPLICIT_FLOW_TOKEN']
     vk_group_id = config['VK_GROUP_ID']
 
+    image_name = None
     try:
         image_name, message = fetch_random_comic()
     except requests.exceptions.HTTPError:
@@ -159,7 +160,8 @@ def main():
         except VKError as error:
             stderr.write(f'{error}\n')
     finally:
-        Path.unlink(image_name)
+        if image_name:
+            Path.unlink(image_name)
 
 
 if __name__ == '__main__':
