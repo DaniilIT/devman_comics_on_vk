@@ -113,8 +113,9 @@ def publish_comic_on_group_wall_vk(implicit_flow_token, group_id, media_id, owne
 
 
 def main():
-    vk_implicit_flow_token = dotenv_values('.env')['VK_IMPLICIT_FLOW_TOKEN']
-    vk_group_id = dotenv_values('.env')['VK_GROUP_ID']
+    config = dotenv_values(".env")
+    vk_implicit_flow_token = config['VK_IMPLICIT_FLOW_TOKEN']
+    vk_group_id = config['VK_GROUP_ID']
 
     try:
         image_name, message = fetch_random_comic()
