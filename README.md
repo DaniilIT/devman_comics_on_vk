@@ -34,7 +34,7 @@ pip install -r requirements.txt
 Для запуска скрипта наберите команду:
 
 ```Python
-python public_comic.py
+python post_comic_on_vk.py
 ```
 
 
