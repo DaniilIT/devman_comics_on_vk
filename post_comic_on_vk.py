@@ -161,7 +161,8 @@ def main():
             stderr.write(f'{error}\n')
     finally:
         if image_name:
-            Path.unlink(image_name)
+            image_path = Path(image_name)
+            image_path.unlink()
 
 
 if __name__ == '__main__':
